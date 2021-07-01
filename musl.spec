@@ -1,6 +1,52 @@
+# Ensure the value is set correctly
+%ifarch %{ix86}
+%global _musl_target_cpu i386
+%endif
+ 
+%ifarch %{arm}
+%ifarch armv3l armv4b armv4l armv4tl armv5tl armv5tel armv5tejl armv6l armv7l
+%global _musl_target_cpu arm
+%else
+%global _musl_target_cpu armhf
+%endif
+%global _musl_platform_suffix eabi
+%endif
+ 
+%ifarch %{mips64}
+%global _musl_target_cpu mips64
+%endif
+ 
+%ifarch %{mips32}
+%global _musl_target_cpu mips
+%endif
+ 
+%ifarch ppc
+%global _musl_target_cpu powerpc
+%endif
+ 
+%ifarch %{power64}
+# POWER architectures have a different name if little-endian
+%ifarch ppc64le
+%global _musl_target_cpu powerpc64le
+%else
+%global _musl_target_cpu powerpc64
+%endif
+%endif
+ 
+%ifnarch %{ix86} %{arm} %{mips} %{power64} ppc
+%global _musl_target_cpu %{_target_cpu}
+%endif
+ 
+# Define the platform name
+%global _musl_platform %{_musl_target_cpu}-linux-musl%{?_musl_platform_suffix}
+%global _musl_gcc_platform %{_musl_target_cpu}-linux-musl-gcc 
+
+%global _libdir %{_prefix}/musl/lib
+%global _includedir %{_prefix}/musl/include
+
 Name:		musl
 Version:	1.2.0
-Release:	1
+Release:	2
 Summary:	An implementation of the standard library for Linux-based systems
 
 License:	MIT
@@ -63,13 +109,26 @@ free, and strives to be correct in the sense of standards
 conformance and safety.
 This package provides the additional development files for
 statically linking musl into programs and libraries.
+	
+%package gcc
+Summary:	Wrapper for using gcc with musl
+Requires:	%{name}-devel = %{version}-%{release}
+Requires:	gcc
+ 
+%description gcc
+musl is a C standard library to power a new generation
+of Linux-based devices. It is lightweight, fast, simple,
+free, and strives to be correct in the sense of standards
+conformance and safety. 
+This package provides a wrapper around gcc to compile
+programs and libraries with musl easily.
 
 %prep
 %setup
 
 %build
 export LDFLAGS="%{?build_ldflags} -Wl,-soname,ld-musl.so.1"
-%configure --enable-debug --enable-wrapper=no
+%configure --enable-debug --enable-wrapper=gcc
 %make_build
 
 %install
@@ -77,6 +136,7 @@ export LDFLAGS="%{?build_ldflags} -Wl,-soname,ld-musl.so.1"
 mkdir -p %{buildroot}/lib/
 mv %{buildroot}%{_libdir}/libc.so %{buildroot}/lib/ld-musl.so.1
 ln -sr %{buildroot}/lib/ld-musl.so.1 %{buildroot}%{_libdir}/ld-musl.so.1
+ln -sr %{buildroot}%{_bindir}/musl-gcc %{buildroot}%{_bindir}/%{_musl_gcc_platform}
 ln -sr %{buildroot}%{_libdir}/ld-musl.so.1 %{buildroot}%{_libdir}/libc.so
 ln -sr %{buildroot}%{_libdir}/libc.so %{buildroot}%{_libdir}/libcrypt.so
 ln -sr %{buildroot}%{_libdir}/libc.so %{buildroot}%{_libdir}/libdl.so
@@ -113,6 +173,15 @@ ln -sr %{buildroot}%{_libdir}/libc.so %{buildroot}%{_libdir}/libutil.so.1
 %license COPYRIGHT
 %{_libdir}/libc.a
 
+%files gcc
+%license COPYRIGHT
+%{_bindir}/musl-gcc
+%{_bindir}/%{_musl_gcc_platform}
+%{_libdir}/musl-gcc.specs
+
 %changelog
+* Tue May 11 2021 Jiajie Li <lijiajie11@huawei.com> - 1.2.0-2
+- Add musl-gcc support
+
 * Fri Dec 4 2020 tangmeng5 <tangmeng5@huawei.com> - 1.2.0-1
 - package init
