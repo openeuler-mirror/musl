@@ -45,12 +45,12 @@
 %global _includedir %{_prefix}/musl/include
 
 Name:		musl
-Version:	1.2.0
-Release:	3
+Version:	1.2.2
+Release:	1
 Summary:	An implementation of the standard library for Linux-based systems
 
 License:	MIT
-URL:		https://musl.libc.org
+URL:		https://musl-libc.org
 Source0:	%{url}/releases/%{name}-%{version}.tar.gz
 
 Patch6000:	backport-rewrite-wcsnrtombs-to-fix-buffer-overflow.patch
@@ -182,6 +182,9 @@ ln -sr %{buildroot}%{_libdir}/libc.so %{buildroot}%{_libdir}/libutil.so.1
 %{_libdir}/musl-gcc.specs
 
 %changelog
+* Fri Sep 24 2021 zhuyan <zhuyan34@huawei.com> - 1.2.2-1
+- upgrade to 1.2.2
+
 * Tue Aug 19 2021 zhuyan <zhuyan34@huawei.com> - 1.2.0-3
 - fix CVE-2020-28928
 
