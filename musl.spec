@@ -46,14 +46,12 @@
 
 Name:		musl
 Version:	1.2.2
-Release:	1
+Release:	2
 Summary:	An implementation of the standard library for Linux-based systems
 
 License:	MIT
 URL:		https://musl-libc.org
 Source0:	%{url}/releases/%{name}-%{version}.tar.gz
-
-Patch6000:	backport-rewrite-wcsnrtombs-to-fix-buffer-overflow.patch
 
 BuildRequires:	gcc
 BuildRequires:	make
@@ -126,7 +124,7 @@ This package provides a wrapper around gcc to compile
 programs and libraries with musl easily.
 
 %prep
-%setup
+%autosetup
 
 %build
 export LDFLAGS="%{?build_ldflags} -Wl,-soname,ld-musl.so.1"
@@ -182,6 +180,9 @@ ln -sr %{buildroot}%{_libdir}/libc.so %{buildroot}%{_libdir}/libutil.so.1
 %{_libdir}/musl-gcc.specs
 
 %changelog
+* Mon Oct 25 2021 zhuyan <zhuyan34@huawei.com> - 1.2.2-2
+- fix compile error
+
 * Fri Sep 24 2021 zhuyan <zhuyan34@huawei.com> - 1.2.2-1
 - upgrade to 1.2.2
 
