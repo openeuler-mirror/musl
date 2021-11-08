@@ -1,0 +1,40 @@
+From fca7428c096066482d8c3f52450810288e27515c Mon Sep 17 00:00:00 2001
+From: Rich Felker <dalias@aerifal.cx>
+Date: Tue, 16 Jun 2020 00:53:57 -0400
+Subject: [PATCH] only use memcpy realloc to shrink if an exact-sized free
+ chunk exists
+
+otherwise, shrink in-place. as explained in the description of commit
+3e16313f8fe2ed143ae0267fd79d63014c24779f, the split here is valid
+without holding split_merge_lock because all chunks involved are in
+the in-use state.
+---
+ src/malloc/malloc.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/src/malloc/malloc.c b/src/malloc/malloc.c
+index 52af1975..c0997ad8 100644
+--- a/src/malloc/malloc.c
++++ b/src/malloc/malloc.c
+@@ -385,6 +385,18 @@ void *realloc(void *p, size_t n)
+ 	/* Crash on corrupted footer (likely from buffer overflow) */
+ 	if (next->psize != self->csize) a_crash();
+ 
++	if (n < n0) {
++		int i = bin_index_up(n);
++		int j = bin_index(n0);
++		if (i<j && (mal.binmap & (1ULL << i)))
++			goto copy_realloc;
++		struct chunk *split = (void *)((char *)self + n);
++		self->csize = split->psize = n | C_INUSE;
++		split->csize = next->psize = n0-n | C_INUSE;
++		__bin_chunk(split);
++		return CHUNK_TO_MEM(self);
++	}
++
+ 	lock(mal.split_merge_lock);
+ 
+ 	size_t nsize = next->csize & C_INUSE ? 0 : CHUNK_SIZE(next);
+-- 
+2.27.0
+

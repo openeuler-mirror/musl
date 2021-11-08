@@ -1,0 +1,32 @@
+From cb5babdc8d624a3e3e7bea0b4e28a677a2f2fc46 Mon Sep 17 00:00:00 2001
+From: Rich Felker <dalias@aerifal.cx>
+Date: Tue, 16 Jun 2020 00:34:12 -0400
+Subject: [PATCH] fix memset overflow in oldmalloc race fix overhaul
+
+commit 3e16313f8fe2ed143ae0267fd79d63014c24779f introduced this bug by
+making the copy case reachable with n (new size) smaller than n0
+(original size). this was left as the only way of shrinking an
+allocation because it reduces fragmentation if a free chunk of the
+appropriate size is available. when that's not the case, another
+approach may be better, but any such improvement would be independent
+of fixing this bug.
+---
+ src/malloc/malloc.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/malloc/malloc.c b/src/malloc/malloc.c
+index 0a38690c..52af1975 100644
+--- a/src/malloc/malloc.c
++++ b/src/malloc/malloc.c
+@@ -409,7 +409,7 @@ copy_realloc:
+ 	new = malloc(n-OVERHEAD);
+ 	if (!new) return 0;
+ copy_free_ret:
+-	memcpy(new, p, n0-OVERHEAD);
++	memcpy(new, p, (n<n0 ? n : n0) - OVERHEAD);
+ 	free(CHUNK_TO_MEM(self));
+ 	return new;
+ }
+-- 
+2.27.0
+
