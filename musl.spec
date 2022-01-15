@@ -45,20 +45,13 @@
 %global _includedir %{_prefix}/musl/include
 
 Name:		musl
-Version:	1.2.0
-Release:	3
+Version:	1.2.2
+Release:	2
 Summary:	An implementation of the standard library for Linux-based systems
 
 License:	MIT
-URL:		https://musl.libc.org
+URL:		https://musl-libc.org
 Source0:	%{url}/releases/%{name}-%{version}.tar.gz
-
-Patch: 0001-reorder-thread-list-unlink-in-pthread_exit-after-all.patch
-Patch: 0002-don-t-use-libc.threads_minus_1-as-relaxed-atomic-for.patch
-Patch: 0003-restore-lock-skipping-for-processes-that-return-to-s.patch
-Patch: 0004-fix-unbounded-heap-expansion-race-in-malloc.patch
-Patch: 0005-fix-memset-overflow-in-oldmalloc-race-fix-overhaul.patch
-Patch: 0006-only-use-memcpy-realloc-to-shrink-if-an-exact-sized-.patch
 
 BuildRequires:	gcc
 BuildRequires:	make
@@ -131,7 +124,7 @@ This package provides a wrapper around gcc to compile
 programs and libraries with musl easily.
 
 %prep
-%autosetup -n %{name}-%{version} -p1
+%autosetup
 
 %build
 export LDFLAGS="%{?build_ldflags} -Wl,-soname,ld-musl.so.1"
@@ -187,8 +180,14 @@ ln -sr %{buildroot}%{_libdir}/libc.so %{buildroot}%{_libdir}/libutil.so.1
 %{_libdir}/musl-gcc.specs
 
 %changelog
-* Fri Nov 5 2021 zhuyan <zhuyan34@huawei.com> - 1.2.0-3
-- fix unbounded heap expansion race in malloc
+* Mon Oct 25 2021 zhuyan <zhuyan34@huawei.com> - 1.2.2-2
+- fix compile error
+
+* Fri Sep 24 2021 zhuyan <zhuyan34@huawei.com> - 1.2.2-1
+- upgrade to 1.2.2
+
+* Tue Aug 19 2021 zhuyan <zhuyan34@huawei.com> - 1.2.0-3
+- fix CVE-2020-28928
 
 * Tue May 11 2021 Jiajie Li <lijiajie11@huawei.com> - 1.2.0-2
 - Add musl-gcc support
